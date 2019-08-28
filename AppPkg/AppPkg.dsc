@@ -25,9 +25,9 @@
   OUTPUT_DIRECTORY               = Build/AppPkg
 #[-start-140226-T140032-UDK-Setup-modify]#
 # SUPPORTED_ARCHITECTURES        = IA32|IPF|X64
-  SUPPORTED_ARCHITECTURES        = IA32|X64|EBC|ARM|AARCH64
+  SUPPORTED_ARCHITECTURES        = IA32|X64
 #[-end-140226-T140032-UDK-Setup-modify]#
-  BUILD_TARGETS                  = DEBUG|RELEASE|NOOPT
+  BUILD_TARGETS                  = DEBUG|RELEASE
   SKUID_IDENTIFIER               = DEFAULT
 
 #
@@ -71,8 +71,8 @@
     DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   !endif  ## DEBUG_ENABLE_OUTPUT
 
-  #DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
-    DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLibOptionalDevicePathProtocol.inf
+  DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
+
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf
@@ -85,11 +85,13 @@
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
 
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
-  #FileHandleLib|ShellPkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
-  #SortLib|ShellPkg/Library/UefiSortLib/UefiSortLib.inf
-  #PathLib|ShellPkg/Library/BasePathLib/BasePathLib.inf
+
+
+
+
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
   SortLib|MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf
+  
   CacheMaintenanceLib|MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
   ShellCommandLib|ShellPkg/Library/UefiShellCommandLib/UefiShellCommandLib.inf
 
