@@ -1,0 +1,34 @@
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = mytesthandle
+  FILE_GUID                      = b931b80a-9c19-41e0-aa42-474da3f76013
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = UefiMain
+
+[Sources]
+  mytesthandle.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  ShellPkg/ShellPkg.dec
+  
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiLib
+  ShellLib
+  HandleParsingLib
+  ShellCommandLib
+  
+[Guids]
+
+[Ppis]
+
+[Protocols]
+
+
+[FeaturePcd]
+
+[Pcd]
