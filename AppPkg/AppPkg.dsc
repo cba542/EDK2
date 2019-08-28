@@ -130,8 +130,10 @@
 #[-start-140523-T140032-H19EepromShellTool-add]#
 #  AppPkg/Applications/HpEepromTool/HpEepromTool.inf
 #[-end-140523-T140032-H19EepromShellTool-add]#
+
   AppPkg/Applications/Hello/Hello.inf
   AppPkg/Applications/mytesthandle/mytesthandle.inf
+  AppPkg/Applications/ShellTestApp/ShellTestApp.inf
 ##############################################################################
 #
 # Specify whether we are running in an emulation environment, or not.
