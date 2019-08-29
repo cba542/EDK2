@@ -134,6 +134,7 @@
   AppPkg/Applications/Hello/Hello.inf
   AppPkg/Applications/mytesthandle/mytesthandle.inf
   AppPkg/Applications/ShellTestApp/ShellTestApp.inf
+  AppPkg/Applications/ListAllProtocolGuid/ListAllProtocolGuid.inf
 ##############################################################################
 #
 # Specify whether we are running in an emulation environment, or not.
