@@ -61,10 +61,11 @@ UefiMain (
              &GuidBuffer,
              &GuidCount
              );
+    Print(L"Handle = %x\n",HandleBuffer[HandleIndex]);
     for(GuidIndex = 0; GuidIndex < GuidCount; GuidIndex++){
       str = GetStringNameFromGuid(GuidBuffer[GuidIndex], NULL);
-
-      Print(L"%s %g \n",str,GuidBuffer[GuidIndex]);
+      
+      Print(L"  %30s %g \n",str,GuidBuffer[GuidIndex]);
 
     }
 
