@@ -96,6 +96,9 @@
   ShellCommandLib|ShellPkg/Library/UefiShellCommandLib/UefiShellCommandLib.inf
 
   HandleParsingLib|ShellPkg/Library/UefiHandleParsingLib/UefiHandleParsingLib.inf
+#-Start- Add MySmm Driver  
+  SmmServicesTableLib|MdePkg/Library/SmmServicesTableLib/SmmServicesTableLib.inf
+#- End - Add MySmm Driver
 ###################################################################################################
 #
 # Components Section - list of the modules and components that will be processed by compilation
@@ -134,11 +137,13 @@
 #-----------------------------------------------------------------------------
 
   AppPkg/Applications/Hello/Hello.inf
-  AppPkg/Applications/mytesthandle/mytesthandle.inf
-  AppPkg/Applications/ShellTestApp/ShellTestApp.inf
-  AppPkg/Applications/ListAllProtocolGuid/ListAllProtocolGuid.inf
-  AppPkg/Applications/ListPci/ListPci.inf
-  
+#  AppPkg/Applications/mytesthandle/mytesthandle.inf
+#  AppPkg/Applications/ShellTestApp/ShellTestApp.inf
+#  AppPkg/Applications/ListAllProtocolGuid/ListAllProtocolGuid.inf
+#  AppPkg/Applications/ListPci/ListPci.inf
+#-Start- Add MySmm Driver
+  AppPkg/Applications/MySmm/MySmm.inf
+#- End - Add MySmm Driver
 #-----------------------------------------------------------------------------
   
 ##############################################################################

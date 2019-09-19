@@ -1,0 +1,48 @@
+### @file
+# Component information file for ACPI SMM module.
+#
+# Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+###
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = MySmm
+  FILE_GUID                      = F655D0B3-615D-4022-9645-0D1F2E9DF78A
+  VERSION_STRING                 = 1.0
+  MODULE_TYPE                    = DXE_SMM_DRIVER
+  PI_SPECIFICATION_VERSION       = 1.20
+  ENTRY_POINT                    = MySmm
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  DebugLib
+  #HobLib
+  #IoLib
+  #PcdLib
+  UefiLib
+  SmmServicesTableLib
+  #BoardAcpiEnableLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  #MinPlatformPkg/MinPlatformPkg.dec
+  
+[Pcd]
+  #gMinPlatformPkgTokenSpaceGuid.PcdAcpiEnableSwSmi        ## CONSUMES
+  #gMinPlatformPkgTokenSpaceGuid.PcdAcpiDisableSwSmi       ## CONSUMES
+
+[Sources]
+  
+  MySmm.c
+
+[Protocols]
+  gEfiSmmSwDispatch2ProtocolGuid                          ## CONSUMES
+
+[Guids]
+
+[Depex]
+  gEfiSmmSwDispatch2ProtocolGuid
