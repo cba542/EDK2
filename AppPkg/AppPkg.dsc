@@ -136,11 +136,11 @@
 
 #-----------------------------------------------------------------------------
 
-  AppPkg/Applications/Hello/Hello.inf
+#  AppPkg/Applications/Hello/Hello.inf
 #  AppPkg/Applications/mytesthandle/mytesthandle.inf
-  AppPkg/Applications/ShellTestApp/ShellTestApp.inf
+#  AppPkg/Applications/ShellTestApp/ShellTestApp.inf
 #-Start- Add ShellArgApp shell
-  AppPkg/Applications/ShellTestArgApp/ShellTestArgApp.inf
+#  AppPkg/Applications/ShellTestArgApp/ShellTestArgApp.inf
 #- End - Add ShellArgApp shell
 #  AppPkg/Applications/ListAllProtocolGuid/ListAllProtocolGuid.inf
 #  AppPkg/Applications/ListPci/ListPci.inf
@@ -148,8 +148,11 @@
 #  AppPkg/Applications/MySmm/MySmm.inf
 #- End - Add MySmm Driver
 #-Start- Add GetVariable App
-  AppPkg/Applications/ZhengGetVariable/ZhengGetVariable.inf
+#  AppPkg/Applications/ZhengGetVariable/ZhengGetVariable.inf
 #- End - Add GetVariable App
+#-Start- Add MSR Read App
+  AppPkg/Applications/ZhengMSR/ZhengMSR.inf
+#- End - Add MSR Read App
 #-----------------------------------------------------------------------------
   
 ##############################################################################
