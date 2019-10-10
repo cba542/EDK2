@@ -151,8 +151,11 @@
 #  AppPkg/Applications/ZhengGetVariable/ZhengGetVariable.inf
 #- End - Add GetVariable App
 #-Start- Add MSR Read App
-  AppPkg/Applications/ZhengMSR/ZhengMSR.inf
+#  AppPkg/Applications/ZhengMSR/ZhengMSR.inf
 #- End - Add MSR Read App
+#-Start- Add Dump ACPI App
+  AppPkg/Applications/DumpACPI/DumpACPI.inf
+#- End - Add Dump ACPI App
 #-----------------------------------------------------------------------------
   
 ##############################################################################
