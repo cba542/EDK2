@@ -14,7 +14,8 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include "DumpACPI.h"
-
+#define DEBUG
+#undef  DEBUG
 extern EFI_SYSTEM_TABLE   *gST;
 extern EFI_BOOT_SERVICES  *gBS;
 
@@ -103,16 +104,7 @@ Returns:
   return EFI_SUCCESS;
 }
 
-/**
-  as the real entry point for the application.
 
-  @param[in] ImageHandle    The firmware allocated handle for the EFI image.
-  @param[in] SystemTable    A pointer to the EFI System Table.
-
-  @retval EFI_SUCCESS       The entry point is executed successfully.
-  @retval other             Some error occurs when executing this entry point.
-
-**/
 EFI_STATUS
 EFIAPI
 ShellAppMain (
@@ -134,23 +126,34 @@ ShellAppMain (
   UINTN                                          SdtCount;
   EFI_ACPI_COMMON_HEADER                         *Table;
   BOOLEAN                                        RootSystemDiscriptor = FALSE;
-
+#ifdef DEBUG
+  Print(L"Debug Line = %d\n",__LINE__);
+#endif
   //Buffer8 = AllocatePool(sizeof(EFI_ACPI_DESCRIPTION_HEADER));
 
-//Enable flag to display the Root System Descriptor Table when the CMD is "-v"  
-  if((Argv[1][0] == '-') && (Argv[1][1] == 'v')){
-    RootSystemDiscriptor = TRUE;
+  //Enable flag to display the Root System Descriptor Table when the CMD is "-v"
+  //If there is no input Parameter and access Argv[1] will cause unknow response(hang up), check Argc to avoid it.
+  if(Argc == 2){
+    if((Argv[1][0] == '-') && (Argv[1][1] == 'v')){
+      RootSystemDiscriptor = TRUE;
+    }
   }
-//Search the RSDP Table in the Configuration Table
+#ifdef DEBUG
+  Print(L"Debug Line = %d\n",__LINE__);
+#endif
+  //Search the RSDP Table in the Configuration Table
   for(int i = 0; i < gST->NumberOfTableEntries ; i++){
 #ifdef DEBUG
     PrintGuid(&(gST->ConfigurationTable[i].VendorGuid));
 #endif
 
     if( CompareGuid(&gAcpi20TableGuid, &(gST->ConfigurationTable[i].VendorGuid)) ){
-
        Buffer8 = (UINT8 *)(gST->ConfigurationTable[i].VendorTable);
-//Check flag and Print the RSDP Table
+#ifdef DEBUG
+       DumpBuffer8(Buffer8, 0x10);
+#endif
+       
+       //Check flag and Print the RSDP Table
        if(RootSystemDiscriptor){
          DumpBuffer8(Buffer8, sizeof(EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER));
        }
@@ -158,7 +161,7 @@ ShellAppMain (
        Xsdt = (EFI_ACPI_DESCRIPTION_HEADER *)Rsdp->XsdtAddress;
        Rsdt = (EFI_ACPI_DESCRIPTION_HEADER *)(UINT64)Rsdp->RsdtAddress;
 
-//Check flag and Print the XSDT Table
+       //Check flag and Print the XSDT Table
        Buffer8 = (UINT8 *)Rsdp->XsdtAddress;
        if(RootSystemDiscriptor){
          PrintTableHeader(Buffer8);
@@ -166,27 +169,30 @@ ShellAppMain (
          DumpBuffer8(Buffer8,Xsdt->Length);
        }
 
-//Check flag and Print the RSDT Table
+       //Check flag and Print the RSDT Table
        Buffer8 = (UINT8 *)(UINT64)Rsdp->RsdtAddress;
        if(RootSystemDiscriptor){
          PrintTableHeader(Buffer8);
          Print(L"\n");
          DumpBuffer8(Buffer8,Rsdt->Length);
        }
-//Initial the SDT table entry and count
+       //Initial the SDT table entry and count
        DescriptorOffset = Rsdp->RsdtAddress + sizeof(EFI_ACPI_DESCRIPTION_HEADER);
        SdtCount = ((Rsdt->Length - sizeof(EFI_ACPI_DESCRIPTION_HEADER))/sizeof(UINT32));
 
        Buffer32 = (UINT32 *)(UINT64)(DescriptorOffset);
-//If there is no input Parameter, StrHexToUintn need a lot of time to convert , check Argc to avoid it.
-       if(Argc == 2){
+       //If there is no input Parameter, StrHexToUintn need a lot of time to convert , check Argc to avoid it.
+       if(Argc == 2 && ((StrHexToUintn(Argv[1])) < SdtCount)){
+#ifdef DEBUG
+         Print(L"StrHexToUintn(Argv[1]) = %x\n",StrHexToUintn(Argv[1]));
+#endif
          for(UINTN j = 0 ; j < SdtCount ; j++){
        
            Buffer8 = (UINT8 *)(UINT64)(Buffer32[j]);
            Table   = (EFI_ACPI_COMMON_HEADER *)(UINT64)(Buffer32[j]);
 
            if( (StrHexToUintn(Argv[1])) == j){
-//StrHexToUintn will convert unknow char to 0, check Argv[1][0] to avoid it.
+             //StrHexToUintn will convert unknow char to 0, check Argv[1][0] to avoid it.
              if(j == 0 && Argv[1][0] != L'0')
                break;
 #ifdef DEBUG
@@ -199,14 +205,16 @@ ShellAppMain (
 
            }
          }
+       }else{
+         Print(L"Please Input the Parameter\n");
        }
 
        //if(!RootSystemDiscriptor){
          Print(L"DumpACPI.efi -v (Command to Dump Root System Descriptor Table(RSDP, RSDT, XSDT)\n");
          Print(L"DumpACPI.efi number (Command to System Descriptor Table(FACP, HEPT, APIC...)\n");
        //}
-//Print SDT table 
-//0.FACP 1.HPET 2.APIC ......
+         //Print SDT table
+         //0.FACP 1.HPET 2.APIC ......
          for(UINTN j = 0 ; j < SdtCount ; j++){
            Buffer8 = (UINT8 *)(UINT64)(Buffer32[j]);
            Table   = (EFI_ACPI_COMMON_HEADER *)(UINT64)(Buffer32[j]);
