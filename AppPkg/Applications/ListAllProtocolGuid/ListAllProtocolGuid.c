@@ -45,7 +45,7 @@ UefiMain (
   UINTN        HandleIndex;
   CHAR16       *str;
 
-  Print(L"SA %d\n",__LINE__);  
+  
   Status = gBS -> LocateHandleBuffer(
                     AllHandles,
                     NULL,
@@ -61,6 +61,7 @@ UefiMain (
              &GuidBuffer,
              &GuidCount
              );
+    //List handle and protocol which intall on it.
     Print(L"Handle = %x\n",HandleBuffer[HandleIndex]);
     for(GuidIndex = 0; GuidIndex < GuidCount; GuidIndex++){
       str = GetStringNameFromGuid(GuidBuffer[GuidIndex], NULL);

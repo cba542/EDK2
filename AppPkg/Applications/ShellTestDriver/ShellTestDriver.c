@@ -7,10 +7,16 @@
 **/
 
 #include <Uefi.h>
-#include <Library/UefiApplicationEntryPoint.h>
+//#include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiLib.h>
+#include <Library/UefiDriverEntryPoint.h>
+//#include <Library/UefiBootServicesTableLib.h>
+//#include <Library/UefiRuntimeServicesTableLib.h>
 
-extern EFI_BOOT_SERVICES *gBS;
+extern  EFI_BOOT_SERVICES *gBS;
+//extern  EFI_SYSTEM_TABLE  *gST;
+
+//extern gEfiTestProtocolGuid;
 
 /**
   as the real entry point for the application.
@@ -29,15 +35,22 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  Print(L"ShellExecute - Pass\n");
+  Print(L"Line %d\n",__LINE__);
   EFI_STATUS Status;
-  VOID       *Interface;
-  Status = gBS->LocateProtocol(
-                      &gEfiTestProtocolGuid,
-                      NULL,
-                      &Interface);
-
+  EFI_HANDLE ThunkHandle = NULL;
+  //Install Protocol(guid = gEfiTestProtocolGuid) on the thunk handle
+  //Install by shell CMD 
+  //>>load ShellTestDriver.efi
+  Status = gBS->InstallProtocolInterface (
+                  &ThunkHandle,
+                  &gEfiTestProtocolGuid, 
+				  EFI_NATIVE_INTERFACE,
+                  NULL
+                  );
   Print(L"Status = %r\n",Status);
-  
+
+
+  Print(L"Line %d\n",__LINE__);
   return EFI_SUCCESS;
 }
+ 

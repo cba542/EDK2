@@ -156,6 +156,9 @@
 #-Start- Add Dump ACPI App
   AppPkg/Applications/DumpACPI/DumpACPI.inf
 #- End - Add Dump ACPI App
+#-Start-Create driver image to Install protocol on the thunk handle
+AppPkg/Applications/ShellTestDriver/ShellTestDriver.inf 
+#- End -Create driver image to Install protocol on the thunk handle
 #-----------------------------------------------------------------------------
   
 ##############################################################################

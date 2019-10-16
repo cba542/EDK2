@@ -12,9 +12,9 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = ShellTestApp
+  BASE_NAME                      = ShellTestDriver
   FILE_GUID                      = 8F7D7B1D-0E1C-4c98-B12E-4EC99C4081AC
-  MODULE_TYPE                    = UEFI_APPLICATION
+  MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = UefiMain
 
@@ -25,13 +25,21 @@
 #
 
 [Sources]
-  ShellTestApp.c
+  ShellTestDriver.c
 
 [Packages]
   MdePkg/MdePkg.dec
-
+  
 [LibraryClasses]
-  UefiApplicationEntryPoint
+  #UefiBootServicesTableLib
+  #UefiRuntimeServicesTableLib
+  UefiDriverEntryPoint
+#  UefiApplicationEntryPoint
   UefiLib
 [Protocols]
   gEfiTestProtocolGuid
+  #gEfiSimpleTextInputExProtocolGuid
+[Depex]
+  #gEfiGraphicsOutputProtocolGuid AND
+  #gEfiSimpleTextInputExProtocolGuid
+  TRUE
