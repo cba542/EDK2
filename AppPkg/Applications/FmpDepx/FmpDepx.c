@@ -59,11 +59,11 @@ void push8(UINT8 x)
 
 UINT8 pop8()
 {
-  //UINT8 PopValue = stack8[top];
-  //stack8[top] = 0;
-  //top--;
-  //return PopValue;
-  return stack8[top--];
+  UINT8 PopValue = stack8[top];
+  stack8[top] = 0;
+  top--;
+  return PopValue;
+  //return stack8[top--];
 }
 
 UINT32 pop32()
@@ -96,13 +96,15 @@ ShellAppMain (
 {
   Print(L"ShellExecute - Pass\n");
 
-  CHAR8 *e;
-  UINT8 n1,n2,n3;
-  UINT32 val1,val2,i;
-
-  EFI_STATUS Status;
-  SHELL_FILE_HANDLE FileH = NULL;
-  EFI_SHELL_PROTOCOL  *ShellProtocol;
+  CHAR8                           *e;
+  UINT32                          i;
+  EFI_STATUS                      Status;
+  EFI_HANDLE                      *HandleBuffer;
+  UINTN                           NumberOfHandles;
+//  UINTN                           ImageInfoSize;
+//Sam--Open FIle Code
+  SHELL_FILE_HANDLE               FileH = NULL;
+  EFI_SHELL_PROTOCOL              *ShellProtocol;
   UINT8                           buffer8[0x50];
   UINTN                           bufferSize = 0x50;
   Status = gBS->LocateProtocol(
@@ -113,8 +115,19 @@ ShellAppMain (
   Status = ShellProtocol->OpenFileByName(L"buffer.bin", &FileH, EFI_FILE_MODE_READ);
   Print(L"Status = %r\n",Status);
   ShellProtocol->ReadFile(FileH, &bufferSize,buffer8);
+//Sam--Open FIle Code
 
-  
+
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiFirmwareManagementProtocolGuid,
+                  NULL,
+                  &NumberOfHandles,
+                  &HandleBuffer
+                  );
+  if (EFI_ERROR(Status)) {
+//    return ;
+  }
   for(i = 0 ; i < 0x20 ; i++)
     stack8[i] = 0;
 
@@ -145,6 +158,30 @@ ShellAppMain (
       //2.push Version to stack
       case 0x01:
       {
+/*
+        for(Index = 0; Index < NumberOfHandles; Index++) {
+          Status = gBS->HandleProtocol(
+                        HandleBuffer[Index],
+                        &gEfiFirmwareManagementProtocolGuid,
+                        (VOID **)&Fmp
+                        );
+          if (EFI_ERROR(Status)) {
+          continue;
+          }
+        ImageInfoSize = 0;
+        Status = Fmp->GetImageInfo (
+                        Fmp,
+                        &ImageInfoSize,
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL
+                        );
+          
+        }
+*/
         UINT32 version = 0x050403;
         UINT32 p1[1];
         UINT8  *p2;
@@ -162,32 +199,29 @@ ShellAppMain (
       //1.get the null-terminated UNICODE String '\0' from depx expression
       //2.compare with EFI_FIRMWARE_IMAGE_DESCRIPTOR->VersionName;
         //CHAR16  *VersionName;
+        while(*e != '\0'){
+          e++;
+          Print(L"%c",*e);
+        }
+        Print(L"\n");
         break;
       }
       //AND
       case 0x03:
       {
-        n1 = pop8();
-        n2 = pop8();
-        n3 = n1 & n2;
-        push8(n3);
+        push8(pop8() & pop8());
         break;
       }
       //Or
       case 0x04:
       {
-        n1 = pop8();
-        n2 = pop8();
-        n3 = n1 | n2;
-        push8(n3);
+        push8(pop8() | pop8());
         break;
       }
       //NOT
       case 0x05:
       {
-        n1 = pop8();
-        n1 = (!n1);
-        push8(n1);
+        push8(!pop8());
         break;
       }
       //push TURE
@@ -205,57 +239,38 @@ ShellAppMain (
       //EQ
       case 0x08:
       {
-        val1 = pop32();
-        val2 = pop32();
-        if(val1 == val2)
-          push8(TRUE);
-        else
-          push8(FALSE);
-#ifdef debugF
-        Print(L"val1 = %x\n",val1);
-        Print(L"val2 = %x\n",val2);
-#endif
+        (pop32() == pop32()) ? push8(TRUE) : push8(FALSE);
         break;
       }
       //GT
       case 0x09:
       {
-
+        (pop32() >  pop32()) ? push8(TRUE) : push8(FALSE);
         break;
       }
       //GTE
       case 0x0A:
       {
-
+        (pop32() >= pop32()) ? push8(TRUE) : push8(FALSE);
         break;
       }
       //LT
       case 0x0B:
       {
-
+        (pop32() <  pop32()) ? push8(TRUE) : push8(FALSE);
         break;
       }
       //LTE
       case 0x0C:
       {
-
+        (pop32() <= pop32()) ? push8(TRUE) : push8(FALSE);
         break;
       }
       case 0x0D:
       {
-        n3 = pop8();
-        if(n3 == 1)
-        {
-          DumpBuffer8(stack8, 0x20);
-          Print(L"END pop result = TRUE\n");
-          return EFI_SUCCESS;
-        }
-        if(n3 == 0)
-        {
-          DumpBuffer8(stack8, 0x20);
-          Print(L"END pop result = FALSE\n");
-          return EFI_DEVICE_ERROR;
-        }
+        pop8() ? Print(L"END pop result = TRUE\n") : Print(L"END pop result = FALSE\n");
+        DumpBuffer8(stack8, 0x20);
+        return EFI_SUCCESS;
         break;
       }
     }
