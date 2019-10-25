@@ -10,7 +10,9 @@
 #include <Uefi.h>
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiLib.h>
+#include <Protocol/Shell.h>
 
+extern EFI_BOOT_SERVICES *gBS;
 INT8  top = -1;
 CHAR8  stack8[20];
 
@@ -57,6 +59,10 @@ void push8(UINT8 x)
 
 UINT8 pop8()
 {
+  //UINT8 PopValue = stack8[top];
+  //stack8[top] = 0;
+  //top--;
+  //return PopValue;
   return stack8[top--];
 }
 
@@ -90,31 +96,33 @@ ShellAppMain (
 {
   Print(L"ShellExecute - Pass\n");
 
- 
-  CHAR8 exp[0x20];
-
-  //exp[3] = 8;
   CHAR8 *e;
   UINT8 n1,n2,n3;
   UINT32 val1,val2,i;
+
+  EFI_STATUS Status;
+  SHELL_FILE_HANDLE FileH = NULL;
+  EFI_SHELL_PROTOCOL  *ShellProtocol;
+  UINT8                           buffer8[0x50];
+  UINTN                           bufferSize = 0x50;
+  Status = gBS->LocateProtocol(
+                      &gEfiShellProtocolGuid,
+                      NULL,
+                      &ShellProtocol);
+  Print(L"Status = %r\n",Status);         
+  Status = ShellProtocol->OpenFileByName(L"buffer.bin", &FileH, EFI_FILE_MODE_READ);
+  Print(L"Status = %r\n",Status);
+  ShellProtocol->ReadFile(FileH, &bufferSize,buffer8);
+
+  
   for(i = 0 ; i < 0x20 ; i++)
     stack8[i] = 0;
 
-  exp[0] = 0;
-  exp[1] = 1;
-  exp[2] = 8;
-  exp[3] = 6;
-  exp[4] = 7;
-  exp[5] = 6;
-  exp[6] = 7;
-  exp[7] = 0x0D;
-  exp[8] = 0x0D;
-
-  e = exp;
+  e = buffer8;
   while(( (*e) <= 0x0D))
   {
     Print(L"\nDependency Expression = 0x%01x\n",*e);
-    //n1 = pop8();
+
     switch(*e)
     {
       //1.GetImageInfo()
@@ -236,13 +244,15 @@ ShellAppMain (
       case 0x0D:
       {
         n3 = pop8();
-        if(n3 == TRUE)
+        if(n3 == 1)
         {
+          DumpBuffer8(stack8, 0x20);
           Print(L"END pop result = TRUE\n");
           return EFI_SUCCESS;
         }
-        if(n3 == FALSE)
+        if(n3 == 0)
         {
+          DumpBuffer8(stack8, 0x20);
           Print(L"END pop result = FALSE\n");
           return EFI_DEVICE_ERROR;
         }
@@ -254,10 +264,7 @@ ShellAppMain (
     DumpBuffer8(stack8, 0x20);
     e++;
   }
-        //Print(L"\nDependency Expression =\n");
-        //DumpBuffer8(exp, 0x20);
-        //Print(L"\nStack =\n");
-        //DumpBuffer8(stack8, 0x20);
+
   return EFI_SUCCESS;
 }
 

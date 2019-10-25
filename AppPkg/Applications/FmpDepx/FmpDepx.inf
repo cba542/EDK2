@@ -36,6 +36,7 @@
   UefiLib
   BaseMemoryLib
 [Guids]
-  #gEfiSmbiosTableGuid
+
+[Protocols]
+  gEfiShellProtocolGuid
 [BuildOptions]
-  #MSFT:*_*_*_CC_FLAGS = /Od
