@@ -10,8 +10,13 @@
 #include <Uefi.h>
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiLib.h>
-#include <Protocol/Shell.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/BaseMemoryLib.h>
 
+#include <Protocol/FirmwareManagement.h>
+//Sam++Open FIle Code
+#include <Protocol/Shell.h>
+//Sam--Open FIle Code
 extern EFI_BOOT_SERVICES *gBS;
 INT8  top = -1;
 CHAR8  stack8[20];
@@ -57,6 +62,14 @@ void push8(UINT8 x)
   stack8[++top] = x;
 }
 
+void push32(UINT32 x)
+{
+  push8((UINT8) x );
+  push8((UINT8)(x>>8));
+  push8((UINT8)(x>>16));
+  push8((UINT8)(x>>24));
+}
+
 UINT8 pop8()
 {
   UINT8 PopValue = stack8[top];
@@ -68,13 +81,55 @@ UINT8 pop8()
 
 UINT32 pop32()
 {
-  UINT32 i,val;
-  UINT8 a[4];
-  for(i = 0; i < 4;i++)
-    a[i] = pop8();
-  val = ((UINT32)a[3] + (((UINT32)a[2])<<8) + ((UINT32)a[1]<<16) + ((UINT32)a[0]<<24));
-  return val;
+  return ( (((UINT32)pop8())<<24) + (((UINT32)pop8())<<16) + ((((UINT32)pop8()))<<8) + (UINT32)pop8() );
+}
 
+UINT16 pop16()
+{
+  return (( (((UINT16)pop8()))<<8) + (UINT16)pop8() );  
+}
+
+EFI_STATUS
+PrintGuid (
+  IN EFI_GUID *Guid
+  )
+/*++
+
+Routine Description:
+
+  This function prints a GUID to STDOUT.
+
+Arguments:
+
+  Guid    Pointer to a GUID to print.
+
+Returns:
+
+  EFI_SUCCESS             The GUID was printed.
+  EFI_INVALID_PARAMETER   The input was NULL.
+
+--*/
+{
+  if (Guid == NULL) {
+    Print(L"Invalid parameter\n");
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Print(
+    L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x\n",
+    (unsigned) Guid->Data1,
+    Guid->Data2,
+    Guid->Data3,
+    Guid->Data4[0],
+    Guid->Data4[1],
+    Guid->Data4[2],
+    Guid->Data4[3],
+    Guid->Data4[4],
+    Guid->Data4[5],
+    Guid->Data4[6],
+    Guid->Data4[7]
+    );
+  return EFI_SUCCESS;
 }
 
 /**
@@ -96,13 +151,22 @@ ShellAppMain (
 {
   Print(L"ShellExecute - Pass\n");
 
-  CHAR8                           *e;
-  UINT32                          i;
-  EFI_STATUS                      Status;
-  EFI_HANDLE                      *HandleBuffer;
-  UINTN                           NumberOfHandles;
-//  UINTN                           ImageInfoSize;
-//Sam--Open FIle Code
+  CHAR8                                         *e;
+  UINT32                                        i;
+  EFI_STATUS                                    Status;
+  EFI_HANDLE                                    *HandleBuffer;
+  UINTN                                         NumberOfHandles;
+  EFI_FIRMWARE_MANAGEMENT_PROTOCOL              *Fmp;
+  UINTN                                         ImageInfoSize;
+  EFI_FIRMWARE_IMAGE_DESCRIPTOR                 *FmpImageInfoBuf;
+  UINT32                                        FmpImageInfoDescriptorVer;
+  UINT8                                         FmpImageInfoCount;
+  UINTN                                         DescriptorSize;
+  UINT32                                        PackageVersion;
+  CHAR16                                        *PackageVersionName;
+
+//Sam++Open File Code
+
   SHELL_FILE_HANDLE               FileH = NULL;
   EFI_SHELL_PROTOCOL              *ShellProtocol;
   UINT8                           buffer8[0x50];
@@ -111,12 +175,45 @@ ShellAppMain (
                       &gEfiShellProtocolGuid,
                       NULL,
                       &ShellProtocol);
-  Print(L"Status = %r\n",Status);         
+  if (EFI_ERROR(Status)) {
+    Print(L"Locate gEfiShellProtocolGuidStatus fail ,status = %r %d\n",Status,__LINE__);
+    return Status;      
+  }
   Status = ShellProtocol->OpenFileByName(L"buffer.bin", &FileH, EFI_FILE_MODE_READ);
-  Print(L"Status = %r\n",Status);
+  if (EFI_ERROR(Status)) {
+    Print(L"Locate OpenFileByName fail ,status = %r %d\n",Status,__LINE__);
+    return Status;
+  }
   ShellProtocol->ReadFile(FileH, &bufferSize,buffer8);
-//Sam--Open FIle Code
+  e = buffer8;
+  
+//Sam--Open File Code
 
+//Sam++ declare exp
+/*
+  CHAR8 exp[20];
+  exp[0] = 0;
+  exp[1] = 0x86;
+  exp[2] = 0x48;
+  exp[3] = 0x1E;
+  exp[4] = 0x1A;
+  exp[5] = 0x17;
+  exp[6] = 0x95;
+  exp[7] = 0x0E;
+  exp[8] = 0x44;
+  exp[9] = 0x9F;
+  exp[10] = 0xDE;
+  exp[11] = 0x3B;
+  exp[12] = 0xE4;
+  exp[13] = 0x4C;
+  exp[14] = 0xEE;
+  exp[15] = 0x21;
+  exp[16] = 0x36;
+  exp[17] = 0x0D;
+  e = exp;
+  */
+//Sam-- declare exp
+  
 
   Status = gBS->LocateHandleBuffer (
                   ByProtocol,
@@ -126,50 +223,67 @@ ShellAppMain (
                   &HandleBuffer
                   );
   if (EFI_ERROR(Status)) {
-//    return ;
+    Print(L"Status = %r %d\n",Status,__LINE__);
+    //return ;
   }
+
   for(i = 0 ; i < 0x20 ; i++)
     stack8[i] = 0;
 
-  e = buffer8;
+
+
   while(( (*e) <= 0x0D))
   {
-    Print(L"\nDependency Expression = 0x%01x\n",*e);
+    Print(L"\nDependency Expression = 0x%01x",*e);
 
     switch(*e)
     {
-      //1.GetImageInfo()
-      //2.pop 16 bytes GUID compare with
-      //3.If compare success push ImageInfo->Version to the stack
+
       case 0x00:
       {
-        UINT32 version = 0x050403;
-        UINT32 p1[1];
-        UINT8  *p2;
-        p1[0] = version;
-        p2 = (UINT8 *)p1;
-        for(i = 0; i < 4; i++)
+        Print(L" (PUSH_GUID)\n");
+        //Pushes the GUID value onto the stack.
+        EFI_GUID *GuidToCompare;
+        INT8 Index;
+        GuidToCompare = (EFI_GUID *)(e+1);
+        for(Index = 0; Index < 16 ;Index ++)
         {
-         push8(p2[i]);
+            e++;
+            push8(*e);
         }
-        break;
-      }
-      //1.GetImageInfo() to get ImageInfo->Version
-      //2.push Version to stack
-      case 0x01:
-      {
+        Print(L"push guid from dpex finish\nStack =\n");
+        DumpBuffer8(stack8, 0x20);
 /*
+        //Store Guid to CompGuid
+        for(Index = 7; Index >= 0; Index--)
+          CompGuid.Data4[Index] = pop8();
+
+        CompGuid.Data3 = pop16();
+        CompGuid.Data2 = pop16();
+        CompGuid.Data1 = pop32();
+*/
+        Print(L"GuidToCompare got from buffer.bin =\n");
+        PrintGuid(GuidToCompare);
+        
+
+        if(NumberOfHandles == 0){
+          Print(L"NumberOfHandles = 0, For Debug and push ImageInfo->Version = 0x50403020\n",NumberOfHandles);
+          push32(0x50403020);
+        }  
         for(Index = 0; Index < NumberOfHandles; Index++) {
           Status = gBS->HandleProtocol(
                         HandleBuffer[Index],
                         &gEfiFirmwareManagementProtocolGuid,
                         (VOID **)&Fmp
                         );
+          Print(L"Debug line = %d\n",__LINE__);
           if (EFI_ERROR(Status)) {
-          continue;
+            Print(L"Status = %r %d\n",Status,__LINE__);
+            continue;
           }
-        ImageInfoSize = 0;
-        Status = Fmp->GetImageInfo (
+          ImageInfoSize = 0;
+          Print(L"Debug line = %d\n",__LINE__);
+          Status = Fmp->GetImageInfo (
                         Fmp,
                         &ImageInfoSize,
                         NULL,
@@ -179,26 +293,122 @@ ShellAppMain (
                         NULL,
                         NULL
                         );
-          
+          Print(L"Debug line = %d\n",__LINE__);
+          if (Status != EFI_BUFFER_TOO_SMALL) {
+          continue;
+          }
+          FmpImageInfoBuf = AllocateZeroPool (ImageInfoSize);
+          if (FmpImageInfoBuf == NULL) {
+          continue;
+          }
+          Print(L"Debug line = %d\n",__LINE__);
+          Status = Fmp->GetImageInfo (
+                          Fmp,
+                          &ImageInfoSize,               // ImageInfoSize
+                          FmpImageInfoBuf,              // ImageInfo
+                          &FmpImageInfoDescriptorVer,   // DescriptorVersion
+                          &FmpImageInfoCount,           // DescriptorCount
+                          &DescriptorSize,              // DescriptorSize
+                          &PackageVersion,              // PackageVersion
+                          &PackageVersionName           // PackageVersionName
+                          );
+          Print(L"Debug line = %d\n",__LINE__);
+          if (EFI_ERROR(Status)) {
+            Print(L"Status = %r %d\n",Status,__LINE__);
+            FreePool(FmpImageInfoBuf);
+            continue;
+          }
+          Print(L"Debug line = %d\n",__LINE__);
+          if(CompareGuid(&FmpImageInfoBuf->ImageTypeId, GuidToCompare)){
+          Print(L"Debug line = %d\n",__LINE__);
+            push32(FmpImageInfoBuf->Version);
+          }
         }
-*/
-        UINT32 version = 0x050403;
-        UINT32 p1[1];
-        UINT8  *p2;
-        p1[0] = version;
-        p2 = (UINT8 *)p1;
-        for(i = 0; i < 4; i++)
+        break;
+      }
+
+      case 0x01:
+      {
+        Print(L" (PUSH_VERSION)\n");
+        INT8   Index;
+        UINT32 VersionToCompare;
+        
+        for(Index = 0; Index < 4 ;Index ++)
         {
-         push8(p2[i]);
+            e++;
+            push8(*e);
         }
+
+        VersionToCompare = pop32();
+        Print(L"VersionToCompare got from buffer.bin = %x\n",VersionToCompare);
+        
+        if(NumberOfHandles == 0){
+          Print(L"NumberOfHandles = 0, For Debug and push ImageInfo->Version = 0x50403020\n",NumberOfHandles);
+          push32(0x50403020);
+        }  
+        
+        for(Index = 0; Index < NumberOfHandles; Index++) {
+          Status = gBS->HandleProtocol(
+                        HandleBuffer[Index],
+                        &gEfiFirmwareManagementProtocolGuid,
+                        (VOID **)&Fmp
+                        );
+          Print(L"Debug line = %d\n",__LINE__);
+          if (EFI_ERROR(Status)) {
+            Print(L"Status = %r %d\n",Status,__LINE__);
+            continue;
+          }
+          ImageInfoSize = 0;
+          Print(L"Debug line = %d\n",__LINE__);
+          Status = Fmp->GetImageInfo (
+                        Fmp,
+                        &ImageInfoSize,
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL
+                        );
+          Print(L"Debug line = %d\n",__LINE__);
+          if (Status != EFI_BUFFER_TOO_SMALL) {
+            continue;
+          }
+          FmpImageInfoBuf = AllocateZeroPool (ImageInfoSize);
+          if (FmpImageInfoBuf == NULL) {
+            continue;
+          }
+          Print(L"Debug line = %d\n",__LINE__);
+          Status = Fmp->GetImageInfo (
+                          Fmp,
+                          &ImageInfoSize,               // ImageInfoSize
+                          FmpImageInfoBuf,              // ImageInfo
+                          &FmpImageInfoDescriptorVer,   // DescriptorVersion
+                          &FmpImageInfoCount,           // DescriptorCount
+                          &DescriptorSize,              // DescriptorSize
+                          &PackageVersion,              // PackageVersion
+                          &PackageVersionName           // PackageVersionName
+                          );
+          Print(L"Debug line = %d\n",__LINE__);
+          if (EFI_ERROR(Status)) {
+            Print(L"Status = %r %d\n",Status,__LINE__);
+            FreePool(FmpImageInfoBuf);
+            continue;
+          }
+          Print(L"Debug line = %d\n",__LINE__);
+          if((FmpImageInfoBuf->Version) == VersionToCompare){
+          Print(L"FmpImage Verison equal to Fmpdepx %d\n",__LINE__);
+            push32(FmpImageInfoBuf->Version);
+          }
+        }
+
 
         break;
       }
       case 0x02:
       {
-      //1.get the null-terminated UNICODE String '\0' from depx expression
-      //2.compare with EFI_FIRMWARE_IMAGE_DESCRIPTOR->VersionName;
-        //CHAR16  *VersionName;
+        Print(L" (DECLARE_VERSION_NAME)\n");
+        Print(L"null-terminated UNICODE string = ");
         while(*e != '\0'){
           e++;
           Print(L"%c",*e);
@@ -209,65 +419,76 @@ ShellAppMain (
       //AND
       case 0x03:
       {
+        Print(L" (AND)\n");
         push8(pop8() & pop8());
         break;
       }
       //Or
       case 0x04:
       {
+        Print(L" (Or)\n");
         push8(pop8() | pop8());
         break;
       }
       //NOT
       case 0x05:
       {
+        Print(L" (NOT)\n");
         push8(!pop8());
         break;
       }
       //push TURE
       case 0x06:
       {
+        Print(L" (TRUE)\n");
         push8(TRUE);
         break;
       }
       //push FALSE
       case 0x07:
       {
+        Print(L" (FALSE)\n");
         push8(FALSE);
         break;
       }
       //EQ
       case 0x08:
       {
+        Print(L" (EQ)\n");
         (pop32() == pop32()) ? push8(TRUE) : push8(FALSE);
         break;
       }
       //GT
       case 0x09:
       {
+        Print(L" (GT)\n");
         (pop32() >  pop32()) ? push8(TRUE) : push8(FALSE);
         break;
       }
       //GTE
       case 0x0A:
       {
+        Print(L" (GTE)\n");
         (pop32() >= pop32()) ? push8(TRUE) : push8(FALSE);
         break;
       }
       //LT
       case 0x0B:
       {
+        Print(L" (LT)\n");
         (pop32() <  pop32()) ? push8(TRUE) : push8(FALSE);
         break;
       }
       //LTE
       case 0x0C:
       {
+        Print(L" (LTE)\n");
         (pop32() <= pop32()) ? push8(TRUE) : push8(FALSE);
         break;
       }
       case 0x0D:
       {
+        Print(L" END\n");
         pop8() ? Print(L"END pop result = TRUE\n") : Print(L"END pop result = FALSE\n");
         DumpBuffer8(stack8, 0x20);
         return EFI_SUCCESS;
