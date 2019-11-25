@@ -154,7 +154,7 @@
 #  AppPkg/Applications/ZhengMSR/ZhengMSR.inf
 #- End - Add MSR Read App
 #-Start- Add Dump ACPI App
-#  AppPkg/Applications/DumpACPI/DumpACPI.inf
+  AppPkg/Applications/DumpACPI/DumpACPI.inf
 #- End - Add Dump ACPI App
 #-Start-Create driver image to Install protocol on the thunk handle
 #AppPkg/Applications/ShellTestDriver/ShellTestDriver.inf 
@@ -166,7 +166,7 @@
 #}
 #
 #-Start-Implement Firmware Device Depx check App
-  AppPkg/Applications/FmpDepx/FmpDepx.inf
+#  AppPkg/Applications/FmpDepx/FmpDepx.inf
 #- End -Implement Firmware Device Depx check App
 #-----------------------------------------------------------------------------
   

@@ -36,3 +36,4 @@
   UefiLib
 #  BaseLib
   MemoryAllocationLib
+  DebugLib
